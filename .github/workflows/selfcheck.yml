@@ -1,0 +1,40 @@
+name: self-check
+
+# Runs the keyless deterministic self-check (DB -> analyzers -> rules engine ->
+# manpower/resource plan -> .docx brief). No model backend, no API key, no secrets.
+# This is the same check documented in the README: `python run.py --selfcheck`.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  selfcheck:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      # The deterministic self-check needs only the two hard deps of the deterministic
+      # path (see README). The deepagents / langchain-* stack is for the agentic path
+      # and is deliberately NOT installed here, keeping CI fast and key-free.
+      - name: Install deterministic-path dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "Flask>=3.0" "python-docx>=1.1"
+
+      - name: Keyless deterministic self-check
+        run: python run.py --selfcheck

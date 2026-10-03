@@ -1,5 +1,7 @@
 # 🌴 Goa Tourism Intelligence
 
+[![self-check](https://github.com/baskarsundarrajan/goa-tourism-intelligence/actions/workflows/selfcheck.yml/badge.svg)](https://github.com/baskarsundarrajan/goa-tourism-intelligence/actions/workflows/selfcheck.yml)
+
 A **multi-agent decision-support system** that helps the **Government of Goa** understand
 tourism challenges and plan policy, **manpower, and resources** for an attractive and
 sustainable destination. Built on **LangChain `deepagents` / `create_deep_agent`**, with a
