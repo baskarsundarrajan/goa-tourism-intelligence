@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Secrets (keep .env.example, never commit real creds)
+.env
+.env.local
+
+# Generated artifacts (reproducible — rebuilt at runtime)
+data/goa_tourism.db
+output/
+findings/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

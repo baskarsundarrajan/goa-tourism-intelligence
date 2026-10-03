@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Goa Tourism Intelligence — Govt Decision Support</title>
+<style>
+  :root{
+    --bg:#0b1016; --panel:#121923; --panel2:#182230; --line:#263345;
+    --ink:#e8eef5; --muted:#93a4b8; --accent:#2bb3a3; --accent2:#54c7b8; --sea:#1f6f8b;
+    --good:#3fb950; --amber:#d8a521; --orange:#e0803a; --bad:#e0564e; --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+       background:radial-gradient(1200px 500px at 80% -10%,#15303a 0,var(--bg) 60%);
+       color:var(--ink);line-height:1.5;min-height:100vh}
+  header{padding:16px 26px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;
+         gap:14px;flex-wrap:wrap}
+  header h1{font-size:19px;margin:0}
+  header .sub{color:var(--muted);font-size:12.5px}
+  header .disc{color:var(--muted);font-size:11px;margin-left:auto;max-width:430px;text-align:right}
+  .wrap{display:grid;grid-template-columns:330px 1fr;gap:0;min-height:calc(100vh - 60px)}
+  @media(max-width:920px){.wrap{grid-template-columns:1fr}}
+  .side{border-right:1px solid var(--line);padding:16px 14px;overflow:auto}
+  .tiles{display:flex;flex-direction:column;gap:10px}
+  .tile{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:13px 14px;cursor:pointer;transition:.15s;position:relative}
+  .tile:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .tile.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .tile .ico{font-size:22px}
+  .tile .tt{font-weight:700;font-size:14px;margin:4px 0 2px}
+  .tile .bl{font-size:11.5px;color:var(--muted)}
+  .tile .chip{position:absolute;top:11px;right:11px;font-size:10px;padding:2px 8px;border-radius:12px;
+    border:1px solid var(--line);color:var(--muted)}
+  .tile .chip.done{border-color:var(--good);color:var(--good)}
+  .dlbar{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+  .btn{background:var(--accent);border:none;border-radius:10px;padding:11px 15px;font-weight:700;
+    cursor:pointer;color:#042019;width:100%;font-size:13.5px}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+  .btn.sea{background:var(--sea);color:#eaf6fb}
+  .main{padding:22px 26px;overflow:auto;max-height:calc(100vh - 60px)}
+  .intro{color:var(--muted);font-size:13.5px;max-width:720px}
+  .intro b{color:var(--ink)}
+  label{display:block;font-size:12px;color:var(--muted);margin:12px 0 5px}
+  select,input{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);
+    border-radius:9px;padding:9px 10px;width:100%;outline:none}
+  select:focus,input:focus{border-color:var(--accent)}
+  .formgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:620px){.formgrid{grid-template-columns:1fr}}
+  .chks{display:flex;flex-wrap:wrap;gap:8px}
+  .chk{display:flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--line);
+    padding:6px 10px;border-radius:20px;font-size:12px;cursor:pointer}
+  .chk input{width:auto}
+  .modes{display:flex;gap:8px;margin:14px 0 4px}
+  .mode{flex:1;text-align:center;border:1px solid var(--line);border-radius:10px;padding:9px;
+    cursor:pointer;font-size:12.5px;background:var(--panel2)}
+  .mode.on{border-color:var(--accent);color:var(--accent);font-weight:700}
+  .mode small{display:block;color:var(--muted);font-size:10.5px;font-weight:400}
+  .row{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
+  .row .btn{width:auto}
+  .perm{font-size:11.5px;color:var(--muted);display:flex;gap:7px;align-items:center;margin-top:10px}
+  .perm input{width:auto}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 18px;margin-top:16px}
+  h2.pt{font-size:17px;margin:0 0 2px}
+  .ptsub{color:var(--muted);font-size:12.5px;margin-bottom:6px}
+  .log{font-size:12.5px;color:var(--muted);margin-top:10px}
+  .log .ev{padding:2px 0}
+  .log .ev.err{color:var(--bad)}
+  .spinner{width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);
+    border-radius:50%;display:inline-block;animation:spin .8s linear infinite;vertical-align:-2px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .hidden{display:none}
+  .hero{display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+  .gauge{--v:0;position:relative;width:130px;height:130px;border-radius:50%;flex:0 0 auto;
+    background:conic-gradient(var(--gc) calc(var(--v)*1%),#1b2838 0);display:grid;place-items:center}
+  .gauge::after{content:"";position:absolute;inset:11px;border-radius:50%;background:var(--panel)}
+  .gauge .n{position:relative;z-index:1;text-align:center}
+  .gauge .n b{font-size:34px;display:block;line-height:1}
+  .gauge .n span{font-size:10.5px;color:var(--muted)}
+  .htxt{flex:1;min-width:230px}
+  .badge{display:inline-block;padding:3px 11px;border-radius:20px;font-size:12px;font-weight:800}
+  .hl{font-size:13.5px;margin:8px 0 2px}
+  .dim{margin:9px 0}
+  .dim .dh{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px}
+  .dim .dh .w{color:var(--muted);font-size:10.5px}
+  .bar{height:8px;background:#1b2838;border-radius:6px;overflow:hidden}
+  .bar>i{display:block;height:100%;border-radius:6px}
+  .rat{font-size:11px;color:var(--muted);margin-top:2px}
+  h3.sec{font-size:13.5px;margin:18px 0 6px;border-bottom:1px solid var(--line);padding-bottom:5px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px}
+  th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+  th{color:var(--muted);font-weight:600;background:var(--panel2)}
+  td.num{text-align:right;font-weight:700}
+  ul.tight{margin:4px 0;padding-left:18px;font-size:12.5px}
+  ul.tight li{margin:3px 0}
+  .gate{border-left:3px solid var(--bad);background:rgba(224,86,78,.08);padding:8px 12px;margin:8px 0;
+    font-size:12.5px;border-radius:0 8px 8px 0}
+  .tag{font-size:10px;padding:1px 6px;border-radius:6px;font-weight:800}
+  .t-H{background:rgba(224,86,78,.16);color:var(--bad)} .t-M{background:rgba(216,165,33,.16);color:var(--amber)}
+  .t-L{background:rgba(63,185,80,.16);color:var(--good)}
+  .day{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;background:var(--panel2)}
+  .day b{color:var(--accent2)}
+  details.norm{margin-top:12px;font-size:12px;color:var(--muted)}
+  details.norm summary{cursor:pointer;color:var(--accent)}
+  .src{font-size:11px;color:var(--muted)}
+  .pill{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:2px 9px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🌴 Goa Tourism Intelligence</h1>
+  <span class="sub">multi-agent decision support for the Govt of Goa · seasonal demand · itinerary/route · local business · sustainability · events — each task is clickable</span>
+  <span class="disc">Decision-support on open, editable planning norms + a dated knowledge base. NOT an official Government position; the human decision-maker decides.</span>
+</header>
+
+<div class="wrap">
+  <div class="side">
+    <div class="tiles" id="tiles"></div>
+    <div class="dlbar">
+      <button class="btn sea" id="briefBtn" disabled>⬇ Download Govt policy brief (.docx)</button>
+      <p class="src" id="briefHint" style="margin-top:8px">Run one or more tasks, then compile the combined brief.</p>
+    </div>
+  </div>
+
+  <div class="main" id="main">
+    <div id="home">
+      <p class="intro">Select a task on the left. Each task reads a seeded Goa-tourism database, scores a
+      transparent <b>preparedness index</b>, and returns a sized <b>manpower &amp; resource plan</b> the
+      Government can act on. Run it instantly with the <b>deterministic engine</b>, or as a full
+      <b>multi-agent pipeline</b> (LangChain <code>create_deep_agent</code> — orchestrator + sub-agents) when a
+      model backend is configured. Tasks you run accumulate into a downloadable policy brief.</p>
+      <p class="intro" style="margin-top:12px">Evidence as of <span id="asof">…</span>. Figures are planning
+      estimates — tune the norms to Goa Police / Drishti Marine / Directorate of Tourism doctrine before budgeting.</p>
+    </div>
+    <div id="panel" class="hidden"></div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let RUBRICS = null, ACTIVE = null, MODE = 'deterministic';
+const TASKS_RUN = new Set();
+const BAND_CLASS = {green:'--good',amber:'--amber',orange:'--orange',red:'--bad'};
+function esc(s){return (s==null?'':''+s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function col(hex){return hex;}
+
+fetch('/rubrics').then(r=>r.json()).then(d=>{
+  RUBRICS = d; $('asof').textContent = d.as_of;
+  const t = $('tiles'); t.innerHTML='';
+  d.order.forEach(k=>{
+    const r = d.domains[k];
+    const el = document.createElement('div');
+    el.className='tile'; el.id='tile-'+k;
+    el.innerHTML = `<span class="chip" id="chip-${k}">not run</span>
+      <div class="ico">${r.icon}</div><div class="tt">${esc(r.title)}</div><div class="bl">${esc(r.blurb)}</div>`;
+    el.onclick = ()=>openTask(k);
+    t.appendChild(el);
+  });
+});
+
+function fieldHTML(f){
+  if(f.type==='select'){
+    const opts = f.options.map(o=>`<option value="${esc(o.value)}" ${o.value==f.default?'selected':''}>${esc(o.label)}</option>`).join('');
+    return `<label>${esc(f.label)}</label><select data-f="${f.name}" data-t="select">${opts}</select>`;
+  }
+  if(f.type==='number'){
+    return `<label>${esc(f.label)}</label><input type="number" data-f="${f.name}" data-t="number" value="${f.default}" min="${f.min||1}" max="${f.max||99}">`;
+  }
+  if(f.type==='multiselect'){
+    const def = new Set(f.default||[]);
+    const chks = f.options.map(o=>`<label class="chk"><input type="checkbox" data-f="${f.name}" value="${esc(o)}" ${def.has(o)?'checked':''}>${esc(o)}</label>`).join('');
+    return `<label>${esc(f.label)}</label><div class="chks">${chks}</div>`;
+  }
+  return '';
+}
+
+function openTask(k){
+  ACTIVE=k;
+  RUBRICS.order.forEach(x=>$('tile-'+x).classList.toggle('active',x===k));
+  $('home').classList.add('hidden'); $('panel').classList.remove('hidden');
+  const r = RUBRICS.domains[k];
+  const simple = r.inputs.filter(f=>f.type!=='multiselect');
+  const multi = r.inputs.filter(f=>f.type==='multiselect');
+  const dims = r.dimensions.map(d=>`<li><b>${esc(d.name)}</b> <span class="w" style="color:var(--muted)">(weight ${d.weight})</span></li>`).join('');
+  const subs = r.subagents.map(s=>`<li><b>${esc(s.name)}</b> — ${esc(s.desc)}</li>`).join('');
+  $('panel').innerHTML = `
+    <h2 class="pt">${r.icon} ${esc(r.title)}</h2>
+    <div class="ptsub">${esc(r.blurb)}</div>
+    <div class="card">
+      <div class="formgrid">${simple.map(fieldHTML).join('')}</div>
+      ${multi.map(f=>`<div style="margin-top:4px">${fieldHTML(f)}</div>`).join('')}
+      <div class="modes">
+        <div class="mode on" data-m="deterministic" onclick="setMode('deterministic')">Deterministic engine<small>instant · keyless</small></div>
+        <div class="mode" data-m="agentic" onclick="setMode('agentic')">Multi-agent pipeline<small>create_deep_agent · needs backend</small></div>
+      </div>
+      <div class="perm"><input type="checkbox" id="allowWeb"><label for="allowWeb" style="margin:0;cursor:pointer">Prefer live web top-up where available (falls back to the curated dated database)</label></div>
+      <div class="row">
+        <button class="btn" id="runBtn" onclick="runTask()">Run ${esc(r.title)} →</button>
+        <span class="pill">spec: adjust the fields above — they are the task's assumptions</span>
+      </div>
+      <div class="log" id="log"></div>
+      <details class="norm"><summary>Scoring rubric &amp; sub-agents (grill-me spec)</summary>
+        <p style="margin:8px 0 4px"><b>Weighted dimensions (higher = better prepared):</b></p>
+        <ul class="tight">${dims}</ul>
+        <p style="margin:8px 0 4px"><b>Multi-agent sub-agents:</b></p><ul class="tight">${subs}</ul>
+      </details>
+    </div>
+    <div id="result"></div>`;
+  setMode(MODE);
+  // re-render last result if present
+  if(LAST[k]) renderResult(LAST[k]);
+}
+
+function setMode(m){MODE=m;document.querySelectorAll('.mode').forEach(e=>e.classList.toggle('on',e.dataset.m===m));}
+
+function collectParams(){
+  const p={};
+  document.querySelectorAll('[data-f]').forEach(el=>{
+    const name=el.dataset.f;
+    if(el.type==='checkbox'){
+      if(el.closest('.chks')){ if(el.checked){(p[name]=p[name]||[]).push(el.value);} }
+    } else if(el.dataset.t==='number'){ p[name]=parseInt(el.value||'0',10); }
+    else { p[name]=el.value; }
+  });
+  return p;
+}
+
+const LAST={};
+async function runTask(){
+  const params=collectParams(), k=ACTIVE;
+  $('runBtn').disabled=true; $('log').innerHTML=''; $('result').innerHTML='';
+  if(MODE==='deterministic'){
+    logLine('⚙ Running deterministic engine…');
+    try{
+      const r=await fetch('/run',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({domain:k,params})});
+      const d=await r.json();
+      if(!r.ok){logLine('✖ '+(d.error||'error'),true);} else {LAST[k]=d.result; renderResult(d.result); markRun(k); logLine('✅ Done.');}
+    }catch(e){logLine('✖ '+e,true);}
+    $('runBtn').disabled=false;
+  } else {
+    logLine('🤖 Starting multi-agent pipeline…');
+    try{
+      const r=await fetch('/run_agent',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({domain:k,params,allow_web:$('allowWeb').checked})});
+      const d=await r.json();
+      if(!r.ok){logLine('✖ '+(d.error||'error'),true);$('runBtn').disabled=false;return;}
+      const es=new EventSource('/stream/'+d.sid);
+      es.onmessage=ev=>{const m=JSON.parse(ev.data);
+        if(m.type==='progress')logLine('… '+m.message);
+        else if(m.type==='result'){LAST[k]=m.result;renderResult(m.result);markRun(k);}
+        else if(m.type==='done'){logLine('✅ '+m.message);es.close();$('runBtn').disabled=false;}
+        else if(m.type==='error'){logLine('✖ '+m.message,true);es.close();$('runBtn').disabled=false;}};
+      es.onerror=()=>{es.close();$('runBtn').disabled=false;};
+    }catch(e){logLine('✖ '+e,true);$('runBtn').disabled=false;}
+  }
+}
+function logLine(t,err){const e=document.createElement('div');e.className='ev'+(err?' err':'');e.textContent=t;$('log').appendChild(e);}
+function markRun(k){TASKS_RUN.add(k);$('chip-'+k).textContent='run';$('chip-'+k).classList.add('done');
+  $('briefBtn').disabled=false;$('briefHint').textContent=`${TASKS_RUN.size} task(s) ready for the brief.`;}
+$('briefBtn').onclick=()=>{window.location='/brief';};
+
+function dimColor(v){return v>=70?'var(--good)':v>=50?'var(--amber)':v>=35?'var(--orange)':'var(--bad)';}
+function riskTag(v){v=(v||'').toUpperCase();return `<span class="tag t-${v||'M'}">${v||'-'}</span>`;}
+function mtable(rows,kcol){return `<table><tr><th>${kcol}</th><th>Recommended</th><th>Planning basis</th></tr>`+
+  rows.map(x=>`<tr><td>${esc(x[kcol==='Role'?'role':'item'])}</td><td class="num">${esc(x.recommended)}</td><td>${esc(x.basis)}${x.note?` — <span class="src">${esc(x.note)}</span>`:''}</td></tr>`).join('')+`</table>`;}
+
+function renderResult(r){
+  const b=r.band||{}, gc=`var(${BAND_CLASS[b.key]||'--bad'})`;
+  const total=(r.manpower||[]).reduce((a,x)=>a+(+x.recommended||0),0);
+  let h=`<div class="card"><div class="hero">
+    <div class="gauge" style="--v:${r.index||0};--gc:${gc}"><div class="n"><b>${r.index}</b><span>/100 prepared</span></div></div>
+    <div class="htxt"><span class="badge" style="background:${gc}22;color:${gc}">${esc(b.label||'')}</span>
+      <div class="hl"><b>${esc(r.headline||'')}</b></div>
+      <div class="rat">${esc(b.headline||'')}</div>
+      <div class="rat" style="margin-top:6px">Scenario: ${esc(r.scenario||'')} · total recommended field deployment ≈ <b>${total.toLocaleString()}</b> personnel</div>
+      ${r.agent_summary?`<div class="rat" style="margin-top:6px;color:var(--ink)"><b>Agent:</b> ${esc(r.agent_summary)}</div>`:''}
+    </div></div>`;
+  (r.gates_fired||[]).forEach(g=>h+=`<div class="gate"><b>⚑ Gate — caps index at ${g.ceiling}:</b> ${esc(g.description)}<br><i>Action:</i> ${esc(g.action)}</div>`);
+  h+=`</div>`;
+
+  // scorecard
+  h+=`<div class="card"><h3 class="sec" style="margin-top:0">Core-rule scorecard</h3>`;
+  (r.dimensions||[]).forEach(d=>{h+=`<div class="dim"><div class="dh"><span>${esc(d.name)} <span class="w">· weight ${d.weight}</span></span><b>${d.score}</b></div>
+    <div class="bar"><i style="width:${d.score}%;background:${dimColor(d.score)}"></i></div><div class="rat">${esc(d.rationale||'')}</div></div>`;});
+  h+=`</div>`;
+
+  // domain-specific extra
+  h+=renderExtra(r);
+
+  // manpower + resources
+  h+=`<div class="card"><h3 class="sec" style="margin-top:0">Recommended manpower deployment <span class="w" style="color:var(--muted);font-size:11px">(total ≈ ${total.toLocaleString()})</span></h3>${mtable(r.manpower||[],'Role')}
+    <h3 class="sec">Recommended resources / infrastructure</h3>${mtable(r.resources||[],'Item')}</div>`;
+
+  // recommendations + risks
+  h+=`<div class="card"><h3 class="sec" style="margin-top:0">Policy actions</h3><ul class="tight">${(r.recommendations||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`;
+  if((r.risks||[]).length){h+=`<h3 class="sec">Key risks</h3><table><tr><th>Risk</th><th>Likelihood</th><th>Impact</th><th>Mitigation</th></tr>`+
+    r.risks.map(x=>`<tr><td>${esc(x.risk)}</td><td>${riskTag(x.likelihood)}</td><td>${riskTag(x.impact)}</td><td>${esc(x.mitigation)}</td></tr>`).join('')+`</table>`;}
+  h+=`</div>`;
+
+  // evidence
+  if((r.findings||[]).length){h+=`<div class="card"><h3 class="sec" style="margin-top:0">Evidence used <span class="w" style="color:var(--muted);font-size:11px">(as of ${esc(r.as_of)})</span></h3><ul class="tight">`+
+    r.findings.map(f=>`<li><b>${esc(f.topic)}: ${esc(f.value)}</b> — ${esc(f.detail)} <span class="src">(${esc(f.source)}; conf ${esc(f.confidence)})</span></li>`).join('')+`</ul></div>`;}
+
+  $('result').innerHTML=h;
+}
+
+function renderExtra(r){
+  const e=r.extra||{};
+  if(r.domain==='itinerary' && e.itinerary){
+    return `<div class="card"><h3 class="sec" style="margin-top:0">Recommended ${e.itinerary.length}-day route</h3>`+
+      e.itinerary.map(d=>`<div class="day"><b>Day ${d.day}</b> · ${esc(d.zone)} zone<ul class="tight">`+
+        d.items.map(it=>`<li>${esc(it.name)} <span class="src">(${esc(it.type)}, ~${it.duration_hr}h${it.over_capacity?' · ⚠ over-capacity in peak':''})</span></li>`).join('')+`</ul></div>`).join('')+`</div>`;
+  }
+  if(r.domain==='business' && e.operators){
+    const ops=e.operators;
+    let h=`<div class="card"><h3 class="sec" style="margin-top:0">Discovered operators <span class="w" style="color:var(--muted);font-size:11px">(${e.count} · avg ${e.avg_rating}/5 · ${Math.round((e.local_share||0)*100)}% local · ${Math.round((e.registered_share||0)*100)}% registered · gap ${e.supply_gap})</span></h3>`;
+    h+= ops.length?`<table><tr><th>Operator</th><th>Rating</th><th>Local</th><th>Registered</th><th>Capacity/day</th></tr>`+
+      ops.map(o=>`<tr><td>${esc(o.name)}</td><td class="num">${o.rating}</td><td>${o.local_owned?'✓':'—'}</td><td>${o.registered?'✓':'<span style="color:var(--bad)">no</span>'}</td><td class="num">${o.capacity}</td></tr>`).join('')+`</table>`:'<p class="rat">No licensed operators found — a development opportunity.</p>';
+    return h+`</div>`;
+  }
+  if(r.domain==='sustainability'){
+    const u=e.utilisation_pct;
+    return `<div class="card"><h3 class="sec" style="margin-top:0">Carrying-capacity readout</h3>
+      <table><tr><th>Site</th><th>Sensitivity</th><th>Carrying capacity/day</th><th>Projected/day</th><th>Utilisation</th></tr>
+      <tr><td>${esc(e.site)}</td><td>${esc(e.sensitivity)}</td><td class="num">${(e.carrying_capacity||0).toLocaleString()}</td><td class="num">${(e.projected_footfall||0).toLocaleString()}</td>
+      <td class="num" style="color:${u>100?'var(--bad)':u>80?'var(--orange)':'var(--good)'}">${u}%</td></tr></table></div>`;
+  }
+  if(r.domain==='events' && e.events){
+    return `<div class="card"><h3 class="sec" style="margin-top:0">Events this month <span class="w" style="color:var(--muted);font-size:11px">(${e.n_major} major · peak ~${(e.peak_single||0).toLocaleString()})</span></h3>
+      <table><tr><th>Event</th><th>Scale</th><th>Peak crowd</th><th>Days</th><th>District</th></tr>`+
+      e.events.map(f=>`<tr><td>${esc(f.name)}</td><td>${esc(f.scale)}</td><td class="num">${(f.crowd_est||0).toLocaleString()}</td><td class="num">${f.duration_days}</td><td>${esc(f.district)}</td></tr>`).join('')+`</table></div>`;
+  }
+  if(r.domain==='seasonal'){
+    return `<div class="card"><h3 class="sec" style="margin-top:0">Demand readout</h3>
+      <table><tr><th>Composite demand</th><th>Hotel occupancy</th><th>Season</th><th>Projected footfall/day</th></tr>
+      <tr><td class="num">${e.composite_demand}/100</td><td class="num">${e.occupancy_pct}%</td><td>${esc(e.season)}</td><td class="num">${(e.projected_daily_footfall||0).toLocaleString()}</td></tr></table></div>`;
+  }
+  return '';
+}
+</script>
+</body>
+</html>

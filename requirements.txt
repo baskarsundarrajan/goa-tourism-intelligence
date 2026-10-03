@@ -1,0 +1,13 @@
+# Goa Tourism Intelligence — multi-agent decision support
+# Core multi-agent framework (mandated): LangChain deepagents / create_deep_agent
+deepagents>=0.7,<0.8
+
+# Model backends — only the one you select at runtime (GOA_MODEL_BACKEND) is imported:
+langchain-anthropic>=1       # anthropic (needs ANTHROPIC_API_KEY)  [default, cloud]
+langchain-ollama>=1.0        # ollama    (local, no API key; needs a tool-capable model)
+langchain-google-genai>=4    # gemini    (needs GOOGLE_API_KEY)
+
+# Web app + deliverables:
+Flask>=3.0
+python-docx>=1.1
+# sqlite3 is part of the Python standard library.
